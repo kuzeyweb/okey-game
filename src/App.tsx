@@ -373,11 +373,11 @@ function App() {
       ) ?? []),
     ];
 
-    const { sets, cloneDeck: setsRemovedCloneDeck } = checkForSets(cloneDeck);
-    const { runs, cloneDeck: runsRemovedCloneDeck } =
-      checkForRuns(setsRemovedCloneDeck);
+    const { runs, cloneDeck: runsRemovedCloneDeck } = checkForRuns(cloneDeck);
+    const { sets, cloneDeck: setsRemovedCloneDeck } =
+      checkForSets(runsRemovedCloneDeck);
     const { sets: doubleSets, cloneDeck: resultCloneDeck } = checkForSets(
-      runsRemovedCloneDeck,
+      setsRemovedCloneDeck,
       1
     );
     if (doubleSets) sets.push(...doubleSets);
@@ -387,7 +387,7 @@ function App() {
     const combinedArray = [
       ...setsAndRuns
         .map((item) => {
-          if (item.length < 4 && okeysInDeck[0]) {
+          if (item.length < 3 && okeysInDeck[0]) {
             const okey = [...okeysInDeck][0];
             delete okeysInDeck[0];
             return [...item, okey];
@@ -534,13 +534,14 @@ function App() {
     }
     const groupedDeck = groupDeck(deck);
     const consecutiveCols = groupConsecutiveColumns(groupedDeck);
+    console.log(consecutiveCols);
     let currentPoint = 0;
     consecutiveCols.forEach((item, index) =>
       item.length > 2 && index !== consecutiveCols.length - 1
         ? (currentPoint += item.length)
         : null
     );
-    console.log(currentPoint)
+    console.log(currentPoint);
     if (currentPoint === 14) {
       return true;
     } else return false;
@@ -566,12 +567,11 @@ function App() {
     const groupedDeck = groupDeck(deck);
     const consecutiveCols = groupConsecutiveColumns(groupedDeck);
     let totalPoint = 0;
-    consecutiveCols.forEach((item, index) =>
-     {
+    consecutiveCols.forEach((item, index) => {
       return item.length > 2 && index !== consecutiveCols.length - 1
         ? (totalPoint += item.length)
-        : null}
-    );
+        : null;
+    });
     if (totalPoint > prevPoint) return true;
     else return false;
   };
@@ -626,11 +626,10 @@ function App() {
     }
   }, [playing]);
 
-   useEffect(() => {
+  useEffect(() => {
     if (gameStatus) completeTurn();
-  }, [discardedTiles]); 
-  console.log(                playing === 1 && playerDecks?.p1?.length === 15
-  )
+  }, [discardedTiles]);
+  console.log(playing === 1 && playerDecks?.p1?.length === 15);
   return (
     <>
       <h1 className="logo" style={{ margin: 0 }}>

@@ -1,5 +1,5 @@
-import React from 'react';
-import YouTube from 'react-youtube';
+import React from "react";
+import YouTube from "react-youtube";
 
 class AutoUnmuteYouTube extends React.Component {
   onReady(event: any) {
@@ -9,8 +9,8 @@ class AutoUnmuteYouTube extends React.Component {
 
   render() {
     const opts = {
-      height: '315',
-      width: '800',
+      height: "315",
+      width: "1000",
       playerVars: {
         autoplay: 1,
         controls: 0,
