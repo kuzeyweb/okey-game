@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import AutoUnmuteYouTube from "./components/YTVideoPlayer";
+import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import TileCard from "./components/TileCard";
 
 const allTiles = [
   ...Array.from({ length: 13 }, (_, index) => ({
@@ -70,18 +72,6 @@ const shuffle = (array: any) => {
   return shuffled;
 };
 
-const removeDuplicates = (arr: any, prop: any) => {
-  const seen: Record<string, boolean> = {};
-  return arr.filter((obj: any) => {
-    const key = `${obj[prop]}`;
-    if (seen[key]) {
-      return false;
-    }
-    seen[key] = true;
-    return true;
-  });
-};
-
 const checkForRuns = (cloneDeck: any[]) => {
   // Check for runs in each colorVariant
   const runs: any[][] = [];
@@ -102,8 +92,7 @@ const checkForRuns = (cloneDeck: any[]) => {
     for (let i = 0; i < currentVariant.length - 1; i++) {
       if (
         currentVariant[i + 1].num === currentVariant[i].num + 1 ||
-        currentVariant[i].num - currentVariant[i + 1].num === 12 ||
-        currentVariant[i + 1].num === currentVariant[i].num
+        currentVariant[i].num - currentVariant[i + 1].num === 12
       ) {
         // Extend the current run
         if (currentRun.length === 0) {
@@ -113,13 +102,9 @@ const checkForRuns = (cloneDeck: any[]) => {
       } else {
         // End the current run
         if (currentRun.length >= 3) {
-          const runWoDuplicate = removeDuplicates(currentRun, "num");
-          runs.push([...runWoDuplicate]);
+          runs.push([...currentRun]);
           cloneDeck = cloneDeck.filter(
-            (item) =>
-              !runWoDuplicate
-                .map((runItem: any) => runItem.id)
-                .includes(item.id)
+            (item) => !currentRun.map((runItem) => runItem.id).includes(item.id)
           );
         }
         currentRun = [];
@@ -134,11 +119,9 @@ const checkForRuns = (cloneDeck: any[]) => {
       currentRun.push(currentVariant[currentVariant.length - 1]);
     }
     if (currentRun.length >= 3) {
-      const runWoDuplicate = removeDuplicates(currentRun, "num");
-      runs.push(runWoDuplicate);
+      runs.push([...currentRun]);
       cloneDeck = cloneDeck.filter(
-        (item) =>
-          !runWoDuplicate.map((runItem: any) => runItem.id).includes(item.id)
+        (item) => !currentRun.map((runItem) => runItem.id).includes(item.id)
       );
     }
   });
@@ -178,8 +161,8 @@ const groupConsecutiveColumns = (deck: any[]) => {
   // Sort the deck by column number
   const sortedDeck = [...deck].sort((a, b) => a.column - b.column);
 
-  const groups = [];
-  let currentGroup: any = [];
+  const groups: number[][] = [];
+  let currentGroup: number[] = [];
 
   // Iterate over the sorted deck to find consecutive column numbers
   sortedDeck.forEach((tile, index) => {
@@ -249,77 +232,17 @@ function App() {
     e.dataTransfer.setData("text", e.target.id);
   };
 
-  const onDrop = (e: any) => {
-    e.preventDefault();
-    var data = e.dataTransfer.getData("text");
-    const currentSlot = Number(data.split("-")[0]);
-    const targetSlot = Number(e.target.id.split("-").pop());
-    if (!targetSlot) return;
-    if (!currentSlot) {
-      const draggedTile = discardedTiles?.p4top1?.find(
-        (item: any) => item.id === data
-      );
-      if (!draggedTile) {
-        if (tileDeck.length < 1)
-          return window.alert("Yerde taş kalmadı, oyun bitti.");
-        if (playerDecks.p1.length === 15) return;
-        const pulledTile = tileDeck[0];
-        setTileDeck((cr) =>
-          [...cr].filter((item) => item.id !== pulledTile.id)
-        );
-        setPlayerDecks((cr) => {
-          let target = targetSlot;
-          while (cr.p1.find((item) => item.column === target)) {
-            target++;
-          }
-          return {
-            ...cr,
-            p1: [...cr.p1, { ...pulledTile, column: target }],
-          };
-        });
-        return;
-      }
-      setDiscardedTiles((cr: any) => ({
-        ...cr,
-        p4top1: [...cr.p4top1].filter((item) => item.id !== draggedTile.id),
-      }));
-      setPlayerDecks((cr) => {
-        let target = targetSlot;
-        while (cr.p1.find((item) => item.column === target)) {
-          target++;
-        }
-        return {
-          ...cr,
-          p1: [...cr.p1, { ...draggedTile, column: target }],
-        };
-      });
-
-      return;
+  const getNumbersBetween = (start: number, end: number): number[] => {
+    const numbers: number[] = [];
+    for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
+      numbers.push(i);
     }
-    const draggedTile = playerDecks?.p1?.find(
-      (item) => item.column === currentSlot
-    );
-    const targetTile = playerDecks?.p1?.find(
-      (item) => item.column === targetSlot
-    );
-    let processedTiles = playerDecks?.p1?.filter(
-      (item) => item.column !== currentSlot && item.column !== targetSlot
-    );
-    const result = [
-      ...(processedTiles ?? []),
-      { ...draggedTile, column: targetSlot },
-    ];
-    if (targetTile)
-      result.push({
-        ...targetTile,
-        column: draggedTile.column,
-      });
-    setPlayerDecks((cr) => ({ ...cr, p1: result }));
+    return numbers;
   };
 
   const distributeTiles = () => {
     const { pickedTiles: okey, remainingTiles: afterOkey } = pickRandomTiles(
-      allTiles,
+      tileDeck,
       1
     );
     const { pickedTiles: playerOne, remainingTiles: afterFirst } =
@@ -328,7 +251,7 @@ function App() {
           ...afterOkey,
           {
             id: "j0",
-            num: okey[0].num,
+            num: okey[0].num + 1,
             colorVariant: okey[0].colorVariant,
             joker: true,
             player: undefined,
@@ -337,7 +260,7 @@ function App() {
           },
           {
             id: "j0",
-            num: okey[0].num,
+            num: okey[0].num + 1,
             colorVariant: okey[0].colorVariant,
             joker: true,
             player: undefined,
@@ -384,7 +307,7 @@ function App() {
     const okeysInDeck =
       deck?.filter(
         (item: any) =>
-          item.num === okey?.num &&
+          item.num === okey?.num + 1 &&
           item.colorVariant === okey?.colorVariant &&
           item.joker !== true
       ) ?? [];
@@ -407,9 +330,8 @@ function App() {
 
     const combinedArray = [
       ...setsAndRuns
-        .sort((a, b) => a.length - b.length)
         .map((item) => {
-          if (item.length < 4 && okeysInDeck[0]) {
+          if (item.length < 3 && okeysInDeck[0]) {
             const okey = [...okeysInDeck][0];
             delete okeysInDeck[0];
             return [...item, okey];
@@ -466,7 +388,6 @@ function App() {
         ...current,
         p1top2: [...current.p1top2, discardedTile],
       }));
-      completeTurn();
     }
   };
 
@@ -558,32 +479,14 @@ function App() {
       console.error("Deck length is not equal to 15");
       return false;
     }
-    const consecutiveCols = groupConsecutiveColumns(deck);
+    const groupedDeck = groupDeck(deck);
+    const consecutiveCols = groupConsecutiveColumns(groupedDeck);
     let currentPoint = 0;
-    consecutiveCols.forEach((col) => {
-      const sameColors = col.every(
-        (item: any) => item.colorVariant === col[0].colorVariant
-      );
-      const sameNums = col.every((item: any) => item.num === col[0].num);
-      if (sameColors) {
-        const isConsecutive = col.every((item: any, index: number) =>
-          index === 0
-            ? true
-            : item.num - 1 === col[index - 1].num ||
-              item.num + 1 === col[index - 1].num ||
-              (item.num === okey.num && item.colorVariant === okey.colorVariant)
-        );
-        if (isConsecutive && col.length > 2) currentPoint += col.length;
-      } else if (sameNums) {
-        const isUniqueColors = col.every(
-          (item: any, _, arr) =>
-            arr.filter((tile) => tile.colorVariant === item.colorVariant)
-              .length < 2 ||
-            (item.num === okey.num && item.colorVariant === okey.colorVariant)
-        );
-        if (isUniqueColors && col.length > 2) currentPoint += col.length;
-      }
-    });
+    consecutiveCols.forEach((item, index) =>
+      item.length > 2 && index !== consecutiveCols.length - 1
+        ? (currentPoint += item.length)
+        : null
+    );
     if (currentPoint === 14) {
       return true;
     } else return false;
@@ -603,7 +506,6 @@ function App() {
       ...current,
       [throwedPlayer]: [...current[throwedPlayer], discardedTile],
     }));
-    completeTurn();
   };
 
   const checkIsRequiredTile = (deck: any, prevPoint: number) => {
@@ -653,8 +555,6 @@ function App() {
     if (winningStatus)
       setTimeout(() => {
         setWinningStatus(false);
-        setDiscardedTiles({ p1top2: [], p2top3: [], p3top4: [], p4top1: [] });
-        distributeTiles();
       }, 15000);
   }, [winningStatus]);
 
@@ -671,6 +571,51 @@ function App() {
     }
   }, [playing]);
 
+  useEffect(() => {
+    if (gameStatus) completeTurn();
+  }, [discardedTiles]);
+
+  const reorder = (list: any, startIndex: any, endIndex: any) => {
+    const result = Array.from(list);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+
+    return result;
+  };
+
+  const onDragEnd = (result: any) => {
+    const { source, destination } = result;
+    console.log(result);
+    if (!destination) {
+      return;
+    }
+
+    const sCol = source.index + 1;
+    const dCol = destination.index + 1;
+    const isForward = dCol - sCol > 0;
+    const changedIndexes = getNumbersBetween(sCol, dCol).filter(
+      (item) => item !== sCol
+    );
+
+    const updatedDeck = playerDecks.p1
+      .map((item) => {
+        if (item.column === sCol) {
+          return { ...item, column: dCol };
+        } else if (changedIndexes.includes(item.column)) {
+          return {
+            ...item,
+            column: isForward ? item.column - 1 : item.column + 1,
+          };
+        } else return item;
+      })
+      .sort((a, b) => a.column - b.column);
+
+    setPlayerDecks((cr) => ({
+      ...cr,
+      p1: updatedDeck,
+    }));
+  };
+
   return (
     <>
       <h1 className="logo" style={{ margin: 0 }}>
@@ -680,37 +625,26 @@ function App() {
       <div className="canvas">
         <div className="board-top">
           <div className="cue-vertical"></div>
-          <div
-            className="user-area"
-            style={{
-              height: "unset",
-              display: "flex",
-              flexDirection: "row",
-              width: "100%",
-              justifyContent: "space-around",
-            }}
-          >
-            <div className="dropzone">
-              <ThrowedTileDeck
-                discardedTiles={discardedTiles}
-                playerThrown="p3top4"
-              />
-            </div>
-            <div className={`user ${playing === 3 ? "active" : ""}`}>Ahmet</div>
-            <div className="dropzone">
-              <ThrowedTileDeck
-                discardedTiles={discardedTiles}
-                playerThrown="p2top3"
-              />
-            </div>
-          </div>
+          <div className={`user ${playing === 3 ? "active" : ""}`}>Ahmet</div>
         </div>
         <div className="mid-section">
           <div className="board-left">
             <div className="cue-horizontal"></div>
             <div className="user-area">
+              <div className="dropzone" style={{ marginTop: "-200px" }}>
+                <ThrowedTileDeck
+                  discardedTiles={discardedTiles}
+                  playerThrown="p3top4"
+                />
+              </div>
               <div className={`user ${playing === 4 ? "active" : ""}`}>
                 Aybek
+              </div>
+              <div className="dropzone" style={{ marginBottom: "-200px" }}>
+                <ThrowedTileDeck
+                  discardedTiles={discardedTiles}
+                  playerThrown="p4top1"
+                />
               </div>
             </div>
           </div>
@@ -722,9 +656,7 @@ function App() {
               onDrop={onFinish}
               onDragOver={allowDrop}
             >
-              <span className="num">
-                {okey?.num !== 1 ? okey?.num - 1 : 13}
-              </span>
+              <span className="num">{okey?.num}</span>
               <div className="circle"></div>
             </div>
             {/* Tiles On Ground */}
@@ -745,7 +677,44 @@ function App() {
           </div>
           <div className="board-right">
             <div className="user-area" style={{ alignItems: "end" }}>
+              <div className="dropzone" style={{ marginTop: "-200px" }}>
+                <ThrowedTileDeck
+                  discardedTiles={discardedTiles}
+                  playerThrown="p2top3"
+                />
+              </div>
               <div className={`user ${playing === 2 ? "active" : ""}`}>Tan</div>
+              <div
+                className="dropzone"
+                style={{ marginBottom: "-200px" }}
+                onDrop={discardTile}
+                onDragOver={
+                  playing === 1 && playerDecks?.p1?.length === 15
+                    ? allowDrop
+                    : undefined
+                }
+              >
+                {discardedTiles.p1top2.length > 0 && (
+                  <div
+                    id={
+                      discardedTiles.p1top2[discardedTiles.p1top2.length - 1]
+                        ?.id
+                    }
+                    className={`tile color${
+                      discardedTiles.p1top2[discardedTiles.p1top2.length - 1]
+                        ?.colorVariant
+                    }`}
+                  >
+                    <span className="num" id={`num-${1}`}>
+                      {
+                        discardedTiles.p1top2[discardedTiles.p1top2.length - 1]
+                          ?.num
+                      }
+                    </span>
+                    <div className="circle" id={`circle-${1}`}></div>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="cue-horizontal"></div>
           </div>
@@ -755,79 +724,31 @@ function App() {
           <div
             className="user-area"
             style={{
+              alignItems: "center",
               height: "unset",
-              display: "flex",
-              flexDirection: "row",
-              width: "100%",
-              justifyContent: "space-around",
             }}
           >
-            <div className="dropzone">
-              <ThrowedTileDeck
-                discardedTiles={discardedTiles}
-                playerThrown="p4top1"
-              />
+            <div className={`user ${playing === 1 ? "active" : ""}`}>
+              Oyuncu
             </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "10px",
-              }}
-            >
-              <div className={`user ${playing === 1 ? "active" : ""}`}>
-                Oyuncu
-              </div>
-              <div>
-                <button onClick={onAutoSort}>Sort Deck</button>
-                <select
-                  onChange={(e) => setSelectedPlayer(Number(e.target.value))}
-                  value={selectedPlayer}
-                  name="player"
-                  id=""
-                >
-                  <option value="1">Player 1</option>
-                  <option value="2">Player 2</option>
-                  <option value="3">Player 3</option>
-                  <option value="4">Player 4</option>
-                </select>
-              </div>
-            </div>
-            <div
-              className="dropzone"
-              style={{ marginBottom: "-200px" }}
-              onDrop={discardTile}
-              onDragOver={
-                playing === 1 && playerDecks?.p1?.length === 15
-                  ? allowDrop
-                  : undefined
-              }
-            >
-              {discardedTiles.p1top2.length > 0 && (
-                <div
-                  id={
-                    discardedTiles.p1top2[discardedTiles.p1top2.length - 1]?.id
-                  }
-                  className={`tile color${
-                    discardedTiles.p1top2[discardedTiles.p1top2.length - 1]
-                      ?.colorVariant
-                  }`}
-                >
-                  <span className="num" id={`num-${1}`}>
-                    {
-                      discardedTiles.p1top2[discardedTiles.p1top2.length - 1]
-                        ?.num
-                    }
-                  </span>
-                  <div className="circle" id={`circle-${1}`}></div>
-                </div>
-              )}
+            <div>
+              <button onClick={onAutoSort}>Sort Deck</button>
+              <select
+                onChange={(e) => setSelectedPlayer(Number(e.target.value))}
+                value={selectedPlayer}
+                name="player"
+                id=""
+              >
+                <option value="1">Player 1</option>
+                <option value="2">Player 2</option>
+                <option value="3">Player 3</option>
+                <option value="4">Player 4</option>
+              </select>
             </div>
           </div>
           <div className="board-container">
-            <div className="tile-container">
-              {Array.from({ length: 26 })?.map((_, index: number) => {
+            {/*       <div className="tile-container">
+                           {Array.from({ length: 26 })?.map((_, index: number) => {
                 const tile = playerDecks?.[
                   `p${selectedPlayer as 1 | 2 | 3 | 4}`
                 ]?.find((tile) => tile.column === index + 1);
@@ -859,8 +780,86 @@ function App() {
                     )}
                   </div>
                 );
-              })}
-            </div>
+              })} 
+            </div> */}
+            <DragDropContext onDragEnd={onDragEnd}>
+              <Droppable
+                key={1}
+                droppableId="playerDeckR1"
+                direction="horizontal"
+              >
+                {(provided) => (
+                  <div
+                    className="tile-container"
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                  >
+                    {Array.from({ length: 13 }).map((_, index) => {
+                      const tile = playerDecks?.[
+                        `p${selectedPlayer as 1 | 2 | 3 | 4}`
+                      ]?.find((item) => item.column === index + 1);
+                      return (
+                        <Draggable
+                          key={index}
+                          draggableId={index.toString()}
+                          index={index}
+                        >
+                          {(provided) => (
+                            <div
+                              className="slot"
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                            >
+                              {tile && <TileCard data={tile} />}
+                            </div>
+                          )}
+                        </Draggable>
+                      );
+                    })}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+              <Droppable
+                key={2}
+                droppableId="playerDeckR2"
+                direction="horizontal"
+              >
+                {(provided) => (
+                  <div
+                    className="tile-container"
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                  >
+                    {Array.from({ length: 13 }).map((_, index) => {
+                      const tile = playerDecks?.[
+                        `p${selectedPlayer as 1 | 2 | 3 | 4}`
+                      ]?.find((item) => item.column === index + 14);
+                      return (
+                        <Draggable
+                          key={index}
+                          draggableId={(index + 13).toString()}
+                          index={index}
+                        >
+                          {(provided) => (
+                            <div
+                              className="slot"
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                            >
+                              {tile && <TileCard data={tile} />}
+                            </div>
+                          )}
+                        </Draggable>
+                      );
+                    })}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
           </div>
         </div>
       </div>

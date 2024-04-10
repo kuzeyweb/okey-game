@@ -9,7 +9,7 @@ class AutoUnmuteYouTube extends React.Component {
 
   render() {
     const opts = {
-      height: "315",
+      height: "600",
       width: "1000",
       playerVars: {
         autoplay: 1,
@@ -18,7 +18,14 @@ class AutoUnmuteYouTube extends React.Component {
       },
     };
 
-    return <YouTube videoId="co9En_Lczkc" opts={opts} onReady={this.onReady} />;
+    return (
+      <YouTube
+        style={{ position: "absolute", zIndex: "123" }}
+        videoId="co9En_Lczkc"
+        opts={opts}
+        onReady={this.onReady}
+      />
+    );
   }
 }
 

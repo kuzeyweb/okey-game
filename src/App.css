@@ -33,14 +33,17 @@
   background: radial-gradient(circle,rgba(6,92,55,1) 0%,rgba(0,39,25,1) 100%);
   width: 1000px;
   height: 800px;
-  position: relative;
+  display: grid;
+  grid-template-rows: 1fr 1fr 1fr;
+}
+
+.mid-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .board-top {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   flex-direction: column;
@@ -48,52 +51,35 @@
 }
 
 .board-left {
-  position: absolute;
-  top: 40%;
-  left: 10px;
-  transform: translateY(-50%);
   display: flex;
   gap: 20px;
   align-items: center;
-  height: 50%;
 }
 
 .board-middle {
-  position: absolute;
-  top: 35%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   display: flex;
   gap: 10px;
 }
 
 .board-right {
-  position: absolute;
-  top: 40%;
-  right: 10px;
-  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: 20px;
-  height: 50%;
-
 }
 
 .board-bottom {
-  width: 750px;
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX( -50%);
   gap: 20px;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 .board-container {
   background-image: url(./assets/istaka.png);
   background-position: center;
   height: 192px;
+  width: 750px;
+
 }
 
 .tile-container {
@@ -139,10 +125,6 @@
   border: 4px solid transparent;
   outline: 2px solid rgba(0, 0, 0, 0.06);
   box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.1)
-}
-
-.tile:active {
-  cursor: move; /* Cursor style when dragging */
 }
 
 .color0 .num {
@@ -200,15 +182,20 @@
 }
 
 .user {
-  border: .1vh solid #fff;
+  border: .2vh solid #fff;
   background-color: transparent;
   font-size: 20px;
   text-align: center;
   padding: 10px;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .user.active {
-  border: .5vh solid green;
+  border-color:  green;
 }
 
 .dropzone {
