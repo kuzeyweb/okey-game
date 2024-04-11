@@ -7,56 +7,48 @@ const allTiles = [
     id: `c11${index}`,
     num: index + 1,
     colorVariant: 1,
-    player: undefined,
     column: undefined,
   })),
   ...Array.from({ length: 13 }, (_, index) => ({
     id: `c12${index}`,
     num: index + 1,
     colorVariant: 1,
-    player: undefined,
     column: undefined,
   })),
   ...Array.from({ length: 13 }, (_, index) => ({
     id: `c21${index}`,
     num: index + 1,
     colorVariant: 2,
-    player: undefined,
     column: undefined,
   })),
   ...Array.from({ length: 13 }, (_, index) => ({
     id: `c22${index}`,
     num: index + 1,
     colorVariant: 2,
-    player: undefined,
     column: undefined,
   })),
   ...Array.from({ length: 13 }, (_, index) => ({
     id: `c31${index}`,
     num: index + 1,
     colorVariant: 3,
-    player: undefined,
     column: undefined,
   })),
   ...Array.from({ length: 13 }, (_, index) => ({
     id: `c32${index}`,
     num: index + 1,
     colorVariant: 3,
-    player: undefined,
     column: undefined,
   })),
   ...Array.from({ length: 13 }, (_, index) => ({
     id: `c41${index}`,
     num: index + 1,
     colorVariant: 4,
-    player: undefined,
     column: undefined,
   })),
   ...Array.from({ length: 13 }, (_, index) => ({
     id: `c42${index}`,
     num: index + 1,
     colorVariant: 4,
-    player: undefined,
     column: undefined,
   })),
 ];
@@ -331,7 +323,6 @@ function App() {
             num: okey[0].num,
             colorVariant: okey[0].colorVariant,
             joker: true,
-            player: undefined,
             column: undefined,
             onGround: false,
           },
@@ -340,7 +331,6 @@ function App() {
             num: okey[0].num,
             colorVariant: okey[0].colorVariant,
             joker: true,
-            player: undefined,
             column: undefined,
             onGround: false,
           },
@@ -359,22 +349,18 @@ function App() {
     setPlayerDecks({
       p1: playerOne.map((item: any, index: number) => ({
         ...item,
-        player: 1,
         column: index + 1,
       })),
       p2: playerTwo.map((item: any, index: number) => ({
         ...item,
-        player: 2,
         column: index + 1,
       })),
       p3: playerThree.map((item: any, index: number) => ({
         ...item,
-        player: 3,
         column: index + 1,
       })),
       p4: playerFour.map((item: any, index: number) => ({
         ...item,
-        player: 4,
         column: index + 1,
       })),
     });
@@ -448,9 +434,14 @@ function App() {
     return combinedArray;
   };
 
-  const onAutoSort = () => {
-    const result = groupDeck(playerDecks[`p${selectedPlayer as 1}`]);
-    setPlayerDecks((cr) => ({ ...cr, [`p${selectedPlayer}`]: result }));
+  const onAutoSort = (player?: 1 | 2 | 3 | 4) => {
+    const result = groupDeck(
+      playerDecks[`p${player ?? (selectedPlayer as 1)}`]
+    );
+    setPlayerDecks((cr) => ({
+      ...cr,
+      [`p${player ?? selectedPlayer}`]: result,
+    }));
   };
 
   const discardTile = (e: any) => {
@@ -486,10 +477,10 @@ function App() {
         playing === 1 ? "p4top1" : `p${playing - 1}top${playing}`;
       const thrownTile =
         discardedTiles[throwedPlayer][discardedTiles[throwedPlayer].length - 1];
-      const deckWithThrownTile = [
+      const deckWithThrownTile = groupDeck([
         ...playerDecks?.[`p${playing as 1 | 2 | 3 | 4}`],
         thrownTile,
-      ];
+      ]);
       if (checkIsRequiredTile(deckWithThrownTile, currentPoint)) {
         console.info(
           playing === 1
@@ -504,16 +495,20 @@ function App() {
             ),
           };
         });
-        const groupedDeck = groupDeck(deckWithThrownTile);
         setPlayerDecks((cr) => ({
           ...cr,
-          [`p${playing}`]: groupedDeck,
+          [`p${playing}`]: deckWithThrownTile,
         }));
-        if (checkIsWinning(groupedDeck)) {
+        if (checkIsWinning(deckWithThrownTile)) {
           console.info(`${playing}. oyuncu oyunu kazandı!`);
         } else {
           botDiscard(
-            deckWithThrownTile[deckWithThrownTile.length - 2],
+            deckWithThrownTile.find(
+              (item) =>
+                item.column ===
+                [...deckWithThrownTile].sort((a, b) => b.column - a.column)?.[0]
+                  .column
+            ),
             playing,
             deckWithThrownTile
           );
@@ -526,10 +521,10 @@ function App() {
         setTileDeck((cr) =>
           [...cr].filter((item) => item.id !== pulledTile.id)
         );
-        const updatedDeck = [
+        const updatedDeck = groupDeck([
           ...playerDecks?.[`p${playing as 1 | 2 | 3 | 4}`],
           pulledTile,
-        ];
+        ]);
         setPlayerDecks((cr) => ({
           ...cr,
           [`p${playing}`]: updatedDeck,
@@ -537,7 +532,15 @@ function App() {
         if (checkIsWinning(updatedDeck)) {
           console.info(`${playing}. oyuncu oyunu kazandı!`);
         } else {
-          botDiscard(updatedDeck[updatedDeck.length - 2], playing, updatedDeck);
+          botDiscard(
+            updatedDeck.find(
+              (item) =>
+                item.column ===
+                [...updatedDeck].sort((a, b) => b.column - a.column)?.[0].column
+            ),
+            playing,
+            updatedDeck
+          );
         }
       }
     };
@@ -575,8 +578,9 @@ function App() {
         const isConsecutive = col.every((item: any, index: number) =>
           index === 0
             ? true
-            : item.num - 1 === col[index - 1].num ||
-              item.num + 1 === col[index - 1].num ||
+            : item.num - 1 === col[index - 1]?.num ||
+              item.num + 1 === col[index - 1]?.num ||
+              (item?.num === 1 && col[index - 1]?.num === 13) ||
               (item.num === okey.num && item.colorVariant === okey.colorVariant)
         );
         if (isConsecutive && col.length > 2) currentPoint += col.length;
@@ -791,7 +795,7 @@ function App() {
                 Oyuncu
               </div>
               <div>
-                <button onClick={onAutoSort}>Sort Deck</button>
+                <button onClick={() => onAutoSort()}>Sort Deck</button>
                 <select
                   onChange={(e) => setSelectedPlayer(Number(e.target.value))}
                   value={selectedPlayer}
