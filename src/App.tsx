@@ -562,9 +562,15 @@ function App() {
     let currentPoint = 0;
     consecutiveCols.forEach((col) => {
       const sameColors = col.every(
-        (item: any) => item.colorVariant === col[0].colorVariant
+        (item: any) =>
+          item.colorVariant === col[0].colorVariant ||
+          (item.num === okey.num && item.colorVariant === okey.colorVariant)
       );
-      const sameNums = col.every((item: any) => item.num === col[0].num);
+      const sameNums = col.every(
+        (item: any) =>
+          item.num === col[0].num ||
+          (item.num === okey.num && item.colorVariant === okey.colorVariant)
+      );
       if (sameColors) {
         const isConsecutive = col.every((item: any, index: number) =>
           index === 0
@@ -575,12 +581,17 @@ function App() {
         );
         if (isConsecutive && col.length > 2) currentPoint += col.length;
       } else if (sameNums) {
-        const isUniqueColors = col.every(
-          (item: any, _, arr) =>
-            arr.filter((tile) => tile.colorVariant === item.colorVariant)
-              .length < 2 ||
+        const isUniqueColors = col.every((item: any, _, arr) => {
+          return (
+            arr.filter(
+              (tile) =>
+                tile.colorVariant === item.colorVariant &&
+                item.num !== okey.num &&
+                item.colorVariant !== okey.colorVariant
+            ).length < 2 ||
             (item.num === okey.num && item.colorVariant === okey.colorVariant)
-        );
+          );
+        });
         if (isUniqueColors && col.length > 2) currentPoint += col.length;
       }
     });
