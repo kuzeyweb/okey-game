@@ -314,6 +314,11 @@ function App() {
       allTiles,
       1
     );
+    const Okey = afterOkey.find(
+      (item) =>
+        item.colorVariant === okey[0].colorVariant ||
+        item.num === (okey[0].num === 13 ? 1 : okey[0].num + 1)
+    );
     const { pickedTiles: playerOne, remainingTiles: afterFirst } =
       pickRandomTiles(
         [
@@ -345,7 +350,7 @@ function App() {
       pickRandomTiles(afterThird, 14);
 
     setTileDeck(afterFourth);
-    setOkey(okey[0]);
+    setOkey(Okey);
     setPlayerDecks({
       p1: playerOne.map((item: any, index: number) => ({
         ...item,
@@ -830,10 +835,11 @@ function App() {
                   }`}
                 >
                   <span className="num" id={`num-${1}`}>
-                    {
-                      discardedTiles.p1top2[discardedTiles.p1top2.length - 1]
-                        ?.num
-                    }
+                    {discardedTiles.p1top2[discardedTiles.p1top2.length - 1]
+                      .joker
+                      ? "★"
+                      : discardedTiles.p1top2[discardedTiles.p1top2.length - 1]
+                          ?.num}
                   </span>
                   <div className="circle" id={`circle-${1}`}></div>
                 </div>
