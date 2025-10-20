@@ -1,197 +1,15 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import AutoUnmuteYouTube from "./components/YTVideoPlayer";
-
-const allTiles = [
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c11${index}`,
-    num: index + 1,
-    colorVariant: 1,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c12${index}`,
-    num: index + 1,
-    colorVariant: 1,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c21${index}`,
-    num: index + 1,
-    colorVariant: 2,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c22${index}`,
-    num: index + 1,
-    colorVariant: 2,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c31${index}`,
-    num: index + 1,
-    colorVariant: 3,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c32${index}`,
-    num: index + 1,
-    colorVariant: 3,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c41${index}`,
-    num: index + 1,
-    colorVariant: 4,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c42${index}`,
-    num: index + 1,
-    colorVariant: 4,
-    column: undefined,
-  })),
-];
-
-const shuffle = (array: any) => {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-};
-
-const removeDuplicates = (arr: any, prop: any) => {
-  const seen: Record<string, boolean> = {};
-  return arr.filter((obj: any) => {
-    const key = `${obj[prop]}`;
-    if (seen[key]) {
-      return false;
-    }
-    seen[key] = true;
-    return true;
-  });
-};
-
-const checkForRuns = (cloneDeck: any[]) => {
-  // Check for runs in each colorVariant
-  const runs: any[][] = [];
-  const colorVariants = [1, 2, 3, 4];
-
-  const sortedByColorAndNum = cloneDeck.sort((a, b) => {
-    if (a.colorVariant !== b.colorVariant) {
-      return a.colorVariant - b.colorVariant;
-    }
-    return a.num - b.num;
-  });
-  colorVariants.forEach((color) => {
-    const currentVariant = [...sortedByColorAndNum].filter(
-      (item) => item.colorVariant === color
-    );
-    if (currentVariant[0]?.num === 1) currentVariant.push(currentVariant[0]);
-    let currentRun: any[] = [];
-    for (let i = 0; i < currentVariant.length - 1; i++) {
-      if (
-        currentVariant[i + 1].num === currentVariant[i].num + 1 ||
-        currentVariant[i].num - currentVariant[i + 1].num === 12 ||
-        currentVariant[i + 1].num === currentVariant[i].num
-      ) {
-        // Extend the current run
-        if (currentRun.length === 0) {
-          currentRun.push(currentVariant[i]);
-        }
-        currentRun.push(currentVariant[i + 1]);
-      } else {
-        // End the current run
-        if (currentRun.length >= 3) {
-          const runWoDuplicate = removeDuplicates(currentRun, "num");
-          runs.push([...runWoDuplicate]);
-          cloneDeck = cloneDeck.filter(
-            (item) =>
-              !runWoDuplicate
-                .map((runItem: any) => runItem.id)
-                .includes(item.id)
-          );
-        }
-        currentRun = [];
-      }
-    }
-    // Check if the last tile completes a run
-    if (
-      currentRun.length >= 3 &&
-      currentVariant[currentVariant.length - 1].num ===
-        currentRun[currentRun.length - 1].num + 1
-    ) {
-      currentRun.push(currentVariant[currentVariant.length - 1]);
-    }
-    if (currentRun.length >= 3) {
-      const runWoDuplicate = removeDuplicates(currentRun, "num");
-      runs.push(runWoDuplicate);
-      cloneDeck = cloneDeck.filter(
-        (item) =>
-          !runWoDuplicate.map((runItem: any) => runItem.id).includes(item.id)
-      );
-    }
-  });
-
-  return { cloneDeck, runs };
-};
-
-const checkForSets = (cloneDeck: any[], min: number = 2) => {
-  const sets: any[] = [];
-  Array.from({ length: 13 }).forEach((_, index) => {
-    const sameNums = [...cloneDeck].filter((tile) => tile.num === index + 1);
-    if (sameNums.length > min) {
-      const numSet = new Set(sameNums.map((tile) => tile.colorVariant));
-      if (numSet.size > min) {
-        const uniqueColorVariants = Object.values(
-          sameNums.reduce((acc, tile) => {
-            if (
-              !acc.find((item: any) => item.colorVariant === tile.colorVariant)
-            )
-              acc.push(tile);
-            return acc;
-          }, [])
-        );
-        sets.push(uniqueColorVariants);
-        cloneDeck = cloneDeck.filter(
-          (tile) =>
-            !uniqueColorVariants.map((item: any) => item.id).includes(tile.id)
-        );
-      }
-    }
-  });
-
-  return { sets, cloneDeck };
-};
-
-const groupConsecutiveColumns = (deck: any[]) => {
-  // Sort the deck by column number
-  const sortedDeck = [...deck].sort((a, b) => a.column - b.column);
-
-  const groups = [];
-  let currentGroup: any = [];
-
-  // Iterate over the sorted deck to find consecutive column numbers
-  sortedDeck.forEach((tile, index) => {
-    if (index === 0 || tile.column === sortedDeck[index - 1].column + 1) {
-      // Add the column number to the current group
-      currentGroup.push(tile);
-    } else {
-      // Start a new group
-      groups.push([...currentGroup]);
-      currentGroup = [tile];
-    }
-  });
-
-  // Add the last group
-  if (currentGroup.length > 0) {
-    groups.push([...currentGroup]);
-  }
-
-  return groups;
-};
+import ThrowedTileDeck from "./components/ThrowedTileDeck";
+import TileGrid from "./components/TileGrid";
+import {
+  allTiles,
+  checkForRuns,
+  checkForSets,
+  groupConsecutiveColumns,
+  pickRandomTiles,
+} from "./utils/gameUtils";
 
 function App() {
   const [tileDeck, setTileDeck] = useState(allTiles);
@@ -212,26 +30,6 @@ function App() {
     p3top4: [],
     p4top1: [],
   });
-
-  const pickRandomTiles = (tileDeck: any, count: number) => {
-    const shuffledTiles = shuffle(tileDeck);
-    const pickedTiles = [];
-    const pickedTileIndexes = new Set();
-
-    while (pickedTiles.length < count && shuffledTiles.length > 0) {
-      const tileIndex = Math.floor(Math.random() * shuffledTiles.length);
-      if (!pickedTileIndexes.has(tileIndex)) {
-        pickedTiles.push(shuffledTiles[tileIndex]);
-        pickedTileIndexes.add(tileIndex);
-      }
-    }
-
-    const remainingTiles = shuffledTiles.filter(
-      (_, index) => !pickedTileIndexes.has(index)
-    );
-
-    return { pickedTiles, remainingTiles };
-  };
 
   const allowDrop = (e: any) => {
     e.preventDefault();
@@ -634,32 +432,6 @@ function App() {
     else return false;
   };
 
-  const ThrowedTileDeck = ({ discardedTiles, playerThrown }: any) => {
-    const tile =
-      discardedTiles?.[playerThrown]?.[
-        discardedTiles?.[playerThrown]?.length - 1
-      ];
-    return (
-      <>
-        {tile && (
-          <div
-            id={tile?.id}
-            className={`tile color${tile.joker ? 0 : tile.colorVariant}`}
-            draggable={
-              playerThrown === "p4top1" && playerDecks.p1.length === 14
-            }
-            onDragStart={playerThrown === "p4top1" ? onDrag : undefined}
-          >
-            <span className="num" id={`num-${1}`}>
-              {tile?.joker ? "★" : tile?.num}
-            </span>
-            <div className="circle" id={`circle-${1}`}></div>
-          </div>
-        )}
-      </>
-    );
-  };
-
   const onFinish = () => {
     if (checkIsWinning(playerDecks.p1)) setWinningStatus(true);
   };
@@ -707,15 +479,19 @@ function App() {
           >
             <div className="dropzone">
               <ThrowedTileDeck
-                discardedTiles={discardedTiles}
-                playerThrown="p3top4"
+                tile={
+                  discardedTiles?.p3top4?.[discardedTiles?.p3top4?.length - 1]
+                }
+                draggable={false}
               />
             </div>
             <div className={`user ${playing === 3 ? "active" : ""}`}>Ahmet</div>
             <div className="dropzone">
               <ThrowedTileDeck
-                discardedTiles={discardedTiles}
-                playerThrown="p2top3"
+                tile={
+                  discardedTiles?.p2top3?.[discardedTiles?.p2top3?.length - 1]
+                }
+                draggable={false}
               />
             </div>
           </div>
@@ -738,7 +514,7 @@ function App() {
               onDragOver={allowDrop}
             >
               <span className="num">
-                {okey?.num !== 1 ? okey?.num - 1 : 13}
+                {okey?.num ? (okey.num !== 1 ? okey.num - 1 : 13) : ""}
               </span>
               <div className="circle"></div>
             </div>
@@ -779,8 +555,11 @@ function App() {
           >
             <div className="dropzone">
               <ThrowedTileDeck
-                discardedTiles={discardedTiles}
-                playerThrown="p4top1"
+                tile={
+                  discardedTiles?.p4top1?.[discardedTiles?.p4top1?.length - 1]
+                }
+                draggable={playing === 1 && playerDecks.p1.length === 14}
+                onDragStart={onDrag}
               />
             </div>
             <div
@@ -841,41 +620,13 @@ function App() {
             </div>
           </div>
           <div className="board-container">
-            <div className="tile-container">
-              {Array.from({ length: 26 })?.map((_, index: number) => {
-                const tile = playerDecks?.[
-                  `p${selectedPlayer as 1 | 2 | 3 | 4}`
-                ]?.find((tile) => tile.column === index + 1);
-                return (
-                  <div
-                    key={index}
-                    id={`slot-${index + 1}`}
-                    className="slot"
-                    onDrop={onDrop}
-                    onDragOver={allowDrop}
-                  >
-                    {tile && (
-                      <div
-                        id={`${index + 1}-${tile.id}`}
-                        className={`tile color${
-                          tile.joker ? 0 : tile.colorVariant
-                        }`}
-                        draggable
-                        onDragStart={onDrag}
-                      >
-                        <span className="num" id={`num-${index + 1}`}>
-                          {tile?.joker ? "★" : tile?.num}
-                        </span>
-                        <div
-                          className="circle"
-                          id={`circle-${index + 1}`}
-                        ></div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <TileGrid
+              tiles={playerDecks?.[`p${selectedPlayer as 1 | 2 | 3 | 4}`] ?? []}
+              slotCount={26}
+              onDrop={onDrop}
+              onDragOver={allowDrop}
+              onDragStart={onDrag}
+            />
           </div>
         </div>
       </div>
