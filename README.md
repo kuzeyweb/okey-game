@@ -1,30 +1,110 @@
-# React + TypeScript + Vite
+# Okey Game
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A browser-based Okey game implemented with React + TypeScript and Vite. The project features modular components, custom hooks for game logic and drag-and-drop, and clear separation of UI and logic.
 
-Currently, two official plugins are available:
+## Getting Started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js 18+
+- pnpm, npm, or yarn
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+### Install
 
-- Configure the top-level `parserOptions` property like this:
+`ash
+pnpm install
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
+# or
+
+npm install
+
+# or
+
+yarn
+`
+
+### Run
+
+`ash
+pnpm dev
+
+# or
+
+npm run dev
+
+# or
+
+yarn dev
+`
+
+### Build
+
+`ash
+pnpm build
+
+# or
+
+npm run build
+
+# or
+
+yarn build
+`
+
+## Project Structure
+
+`src/
+  App.tsx
+  components/
+    board/
+      BoardTop.tsx
+      BoardMiddle.tsx
+      BoardBottom.tsx
+    tiles/
+      TileGrid.tsx
+      ThrowedTileDeck.tsx
+      TileCard.tsx
+    media/
+      YTVideoPlayer.tsx
+  hooks/
+    useDragDrop.ts
+    useGameState.ts
+  utils/
+    gameUtils.ts
+    gameLogic.ts
+    debug.ts
+  assets/
+    istaka.png
+    react.svg`
+
+## Key Concepts
+
+- Components are organized under components/board, components/tiles, and components/media for clarity.
+- Core game logic is contained in utils/gameLogic.ts and pure utilities in utils/gameUtils.ts.
+- useGameState manages turn flow, auto-sort, and win checks.
+- useDragDrop encapsulates drag/drop interactions.
+
+## Debugging
+
+A simple debug utility is provided in src/utils/debug.ts.
+
+- Toggle all debug logs:
+  `	s
+// src/utils/debug.ts
+export const DEBUG_CONFIG = {
+  enabled: false,
+  levels: {
+    STATE_CHANGES: true,
+    GAME_EVENTS: true,
+    DRAG_DROP: true,
   },
-}
-```
+};
+`
+- When enabled is true, functions will emit console.info logs according to their level.
+- Render and initialization paths intentionally do not emit logs to avoid noisy output.
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+## Scripts
+
+- dev: start development server
+- build: production build
+- preview: preview built app (if configured by Vite)

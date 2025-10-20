@@ -5,7 +5,6 @@ export const DEBUG_CONFIG = {
 
   // Debug levels
   levels: {
-    FUNCTION_CALLS: true,
     STATE_CHANGES: true,
     GAME_EVENTS: true,
     DRAG_DROP: true,

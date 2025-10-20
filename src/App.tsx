@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import AutoUnmuteYouTube from "./components/YTVideoPlayer";
-import BoardTop from "./components/BoardTop";
-import BoardMiddle from "./components/BoardMiddle";
-import BoardBottom from "./components/BoardBottom";
+import AutoUnmuteYouTube from "./components/media/YTVideoPlayer";
+import BoardTop from "./components/board/BoardTop";
+import BoardMiddle from "./components/board/BoardMiddle";
+import BoardBottom from "./components/board/BoardBottom";
 import { allTiles } from "./utils/gameUtils";
 import { distributeTilesWithOkey } from "./utils/gameLogic";
 import { useDragDrop } from "./hooks/useDragDrop";
@@ -39,7 +39,6 @@ function App() {
    * Completes the current turn and moves to the next player
    */
   const completeTurn = () => {
-    debugLog("FUNCTION_CALLS", "completeTurn called");
     setPlaying((cr) => {
       const nextPlayer = cr === 4 ? 1 : cr + 1;
       console.info(`${nextPlayer}. Oyuncu oynuyor.`);
@@ -78,7 +77,6 @@ function App() {
    * Distributes tiles to all players and sets up the game
    */
   const distributeTiles = () => {
-    debugLog("FUNCTION_CALLS", "distributeTiles called");
     const { tileDeck: deck, okey: ok, playerDecks } = distributeTilesWithOkey();
     setTileDeck(deck);
     setOkey(ok);

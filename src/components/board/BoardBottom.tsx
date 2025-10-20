@@ -1,7 +1,7 @@
 import React from "react";
-import ThrowedTileDeck from "./ThrowedTileDeck";
-import TileGrid from "./TileGrid";
-import { debugLog } from "../utils/debug";
+import ThrowedTileDeck from "../tiles/ThrowedTileDeck";
+import TileGrid from "../tiles/TileGrid";
+import { debugLog } from "../../utils/debug";
 
 interface BoardBottomProps {
   playing: number;
@@ -37,8 +37,6 @@ export default function BoardBottom({
   allowDrop,
   discardTile,
 }: BoardBottomProps) {
-  debugLog("FUNCTION_CALLS", "BoardBottom render");
-
   /**
    * Handles player selection change
    */
@@ -52,7 +50,6 @@ export default function BoardBottom({
    * Handles auto sort button click
    */
   const handleAutoSort = () => {
-    debugLog("FUNCTION_CALLS", "Auto sort button clicked");
     onAutoSort();
   };
   return (

@@ -1,5 +1,4 @@
-import ThrowedTileDeck from "./ThrowedTileDeck";
-import { debugLog } from "../utils/debug";
+import ThrowedTileDeck from "../tiles/ThrowedTileDeck";
 
 interface BoardTopProps {
   playing: number;

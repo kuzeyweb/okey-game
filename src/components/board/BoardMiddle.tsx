@@ -1,5 +1,4 @@
 import React from "react";
-import { debugLog } from "../utils/debug";
 
 interface BoardMiddleProps {
   playing: number;

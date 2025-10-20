@@ -48,7 +48,6 @@ export function useGameState({
    * Completes the current turn and moves to the next player
    */
   const completeTurn = useCallback(() => {
-    debugLog("FUNCTION_CALLS", "completeTurn called");
     setPlaying((cr) => (cr === 4 ? 1 : cr + 1));
   }, [setPlaying]);
 

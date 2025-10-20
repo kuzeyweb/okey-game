@@ -1,5 +1,5 @@
 import React from "react";
-import { type Tile } from "../utils/gameUtils";
+import { type Tile } from "../../utils/gameUtils";
 
 interface TileGridProps {
   tiles: Tile[];
