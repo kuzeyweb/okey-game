@@ -8,8 +8,23 @@ import { allTiles } from "./utils/gameUtils";
 import { distributeTilesWithOkey } from "./utils/gameLogic";
 import { useDragDrop } from "./hooks/useDragDrop";
 import { useGameState } from "./hooks/useGameState";
+import { DEBUG_CONFIG, debugLog } from "./config/debug";
 
+/**
+ * Main App Component - Okey Game
+ *
+ * This is the root component that manages the overall game state and renders
+ * the complete game board. It orchestrates all game logic through custom hooks
+ * and renders the three main board sections.
+ *
+ * Features:
+ * - Game state management (tiles, players, okey, turn order)
+ * - Drag and drop functionality
+ * - Game flow control (turns, winning conditions)
+ * - Board rendering (top, middle, bottom sections)
+ */
 function App() {
+  // Game state initialization
   const [tileDeck, setTileDeck] = useState(allTiles);
   const [playerDecks, setPlayerDecks] = useState<{
     p1: any[];
@@ -29,13 +44,28 @@ function App() {
     p4top1: [],
   });
 
+  debugLog("APP", "Component rendered", {
+    playing,
+    gameStatus,
+    winningStatus,
+    tileDeckLength: tileDeck.length,
+  });
+
+  /**
+   * Complete turn function - advances to next player
+   * Called when a player finishes their turn
+   */
   const completeTurn = () => {
+    debugLog("APP", "Completing turn", { currentPlayer: playing });
     setPlaying((cr) => {
-      console.info(`${cr === 4 ? 1 : cr + 1}. Oyuncu oynuyor.`);
-      return cr === 4 ? 1 : cr + 1;
+      const nextPlayer = cr === 4 ? 1 : cr + 1;
+      console.info(`${nextPlayer}. Oyuncu oynuyor.`);
+      debugLog("APP", "Turn completed", { nextPlayer });
+      return nextPlayer;
     });
   };
 
+  // Custom hooks for game functionality
   const { allowDrop, onDrag, onDrop, discardTile } = useDragDrop({
     playerDecks,
     setPlayerDecks,
@@ -60,31 +90,45 @@ function App() {
     setWinningStatus,
   });
 
+  //  Distribute tiles to all players at game start
   const distributeTiles = () => {
+    debugLog("APP", "Distributing tiles");
     const { tileDeck: deck, okey: ok, playerDecks } = distributeTilesWithOkey();
     setTileDeck(deck);
     setOkey(ok);
     setPlayerDecks(playerDecks);
+    debugLog("APP", "Tiles distributed", {
+      remainingTiles: deck.length,
+      okeyTile: ok,
+    });
   };
 
+  // Effect: Handle winning status - reset game after 15 seconds
   useEffect(() => {
-    if (winningStatus)
+    if (winningStatus) {
+      debugLog("APP", "Game won, resetting in 15 seconds");
       setTimeout(() => {
         setWinningStatus(false);
         setDiscardedTiles({ p1top2: [], p2top3: [], p3top4: [], p4top1: [] });
         distributeTiles();
+        debugLog("APP", "Game reset completed");
       }, 15000);
+    }
   }, [winningStatus]);
 
+  // Effect: Initialize game on first load
   useEffect(() => {
     if (!gameStatus) {
+      debugLog("APP", "Initializing game");
       distributeTiles();
       setGameStatus(true);
     }
   }, [tileDeck]);
 
+  // Effect: Handle bot players' turns
   useEffect(() => {
     if (playing !== 1) {
+      debugLog("APP", "Bot player turn", { botPlayer: playing });
       play();
     }
   }, [playing]);
@@ -96,7 +140,10 @@ function App() {
       </h1>
       {winningStatus && <AutoUnmuteYouTube />}
       <div className="canvas">
+        {/* Top board section - Players 2 and 3 */}
         <BoardTop playing={playing} discardedTiles={discardedTiles} />
+
+        {/* Middle board section - Okey tile and ground tiles */}
         <BoardMiddle
           playing={playing}
           playerDecks={playerDecks}
@@ -106,6 +153,8 @@ function App() {
           onFinish={onFinish}
           allowDrop={allowDrop}
         />
+
+        {/* Bottom board section - Player 1 controls and tile grid */}
         <BoardBottom
           playing={playing}
           playerDecks={playerDecks}

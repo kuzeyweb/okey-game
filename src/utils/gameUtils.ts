@@ -1,219 +1,231 @@
-export type Tile = {
+import { debugLog } from "../config/debug";
+
+/**
+ * Game Utilities
+ *
+ * Contains pure utility functions for the Okey game including:
+ * - Tile definitions and constants
+ * - Array manipulation functions (shuffle, removeDuplicates)
+ * - Game logic utilities (checkForRuns, checkForSets, groupConsecutiveColumns)
+ * - Random tile selection
+ */
+
+// Tile type definition
+export interface Tile {
   id: string;
   num: number;
   colorVariant: number;
   joker?: boolean;
   column?: number;
   onGround?: boolean;
-};
+}
 
-export const allTiles = [
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c11${index}`,
-    num: index + 1,
-    colorVariant: 1,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c12${index}`,
-    num: index + 1,
-    colorVariant: 1,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c21${index}`,
-    num: index + 1,
-    colorVariant: 2,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c22${index}`,
-    num: index + 1,
-    colorVariant: 2,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c31${index}`,
-    num: index + 1,
-    colorVariant: 3,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c32${index}`,
-    num: index + 1,
-    colorVariant: 3,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c41${index}`,
-    num: index + 1,
-    colorVariant: 4,
-    column: undefined,
-  })),
-  ...Array.from({ length: 13 }, (_, index) => ({
-    id: `c42${index}`,
-    num: index + 1,
-    colorVariant: 4,
-    column: undefined,
-  })),
+// All possible tiles in Okey game (106 tiles total)
+export const allTiles: Tile[] = [
+  // Red tiles (1-13, 2 sets)
+  ...Array.from({ length: 2 }, (_, setIndex) =>
+    Array.from({ length: 13 }, (_, i) => ({
+      id: `red-${setIndex}-${i + 1}`,
+      num: i + 1,
+      colorVariant: 1,
+      column: undefined,
+    }))
+  ).flat(),
+
+  // Blue tiles (1-13, 2 sets)
+  ...Array.from({ length: 2 }, (_, setIndex) =>
+    Array.from({ length: 13 }, (_, i) => ({
+      id: `blue-${setIndex}-${i + 1}`,
+      num: i + 1,
+      colorVariant: 2,
+      column: undefined,
+    }))
+  ).flat(),
+
+  // Green tiles (1-13, 2 sets)
+  ...Array.from({ length: 2 }, (_, setIndex) =>
+    Array.from({ length: 13 }, (_, i) => ({
+      id: `green-${setIndex}-${i + 1}`,
+      num: i + 1,
+      colorVariant: 3,
+      column: undefined,
+    }))
+  ).flat(),
+
+  // Black tiles (1-13, 2 sets)
+  ...Array.from({ length: 2 }, (_, setIndex) =>
+    Array.from({ length: 13 }, (_, i) => ({
+      id: `black-${setIndex}-${i + 1}`,
+      num: i + 1,
+      colorVariant: 4,
+      column: undefined,
+    }))
+  ).flat(),
+
+  // Jokers (2 tiles)
+  { id: "joker-1", num: 0, colorVariant: 0, joker: true, column: undefined },
+  { id: "joker-2", num: 0, colorVariant: 0, joker: true, column: undefined },
 ];
 
-export const shuffle = (array: any) => {
+/**
+ * Shuffle array using Fisher-Yates algorithm
+ */
+export const shuffle = (array: any[]): any[] => {
+  debugLog("GAME_UTILS", "Shuffling array", { arrayLength: array.length });
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
+  debugLog("GAME_UTILS", "Array shuffled", { shuffledLength: shuffled.length });
   return shuffled;
 };
 
-export const removeDuplicates = (arr: any, prop: any) => {
-  const seen: Record<string, boolean> = {};
-  return arr.filter((obj: any) => {
-    const key = `${obj[prop]}`;
-    if (seen[key]) {
-      return false;
-    }
-    seen[key] = true;
-    return true;
+/**
+ * Remove duplicate tiles from array
+ */
+export const removeDuplicates = (tiles: Tile[]): Tile[] => {
+  debugLog("GAME_UTILS", "Removing duplicates", {
+    originalLength: tiles.length,
   });
+  const unique = tiles.filter(
+    (tile, index, self) => index === self.findIndex((t) => t.id === tile.id)
+  );
+  debugLog("GAME_UTILS", "Duplicates removed", {
+    originalLength: tiles.length,
+    uniqueLength: unique.length,
+  });
+  return unique;
 };
 
-export const checkForRuns = (cloneDeck: any[]) => {
-  // Check for runs in each colorVariant
-  const runs: any[][] = [];
-  const colorVariants = [1, 2, 3, 4];
+/**
+ * Check if tiles form a valid run (consecutive numbers of same color)
+ */
+export const checkForRuns = (tiles: Tile[]): boolean => {
+  debugLog("GAME_UTILS", "Checking for runs", { tilesCount: tiles.length });
 
-  const sortedByColorAndNum = cloneDeck.sort((a, b) => {
-    if (a.colorVariant !== b.colorVariant) {
-      return a.colorVariant - b.colorVariant;
-    }
-    return a.num - b.num;
-  });
-  colorVariants.forEach((color) => {
-    const currentVariant = [...sortedByColorAndNum].filter(
-      (item) => item.colorVariant === color
-    );
-    if (currentVariant[0]?.num === 1) currentVariant.push(currentVariant[0]);
-    let currentRun: any[] = [];
-    for (let i = 0; i < currentVariant.length - 1; i++) {
-      if (
-        currentVariant[i + 1].num === currentVariant[i].num + 1 ||
-        currentVariant[i].num - currentVariant[i + 1].num === 12 ||
-        currentVariant[i + 1].num === currentVariant[i].num
-      ) {
-        // Extend the current run
-        if (currentRun.length === 0) {
-          currentRun.push(currentVariant[i]);
-        }
-        currentRun.push(currentVariant[i + 1]);
-      } else {
-        // End the current run
-        if (currentRun.length >= 3) {
-          const runWoDuplicate = removeDuplicates(currentRun, "num");
-          runs.push([...runWoDuplicate]);
-          cloneDeck = cloneDeck.filter(
-            (item) =>
-              !runWoDuplicate
-                .map((runItem: any) => runItem.id)
-                .includes(item.id)
-          );
-        }
-        currentRun = [];
-      }
-    }
-    // Check if the last tile completes a run
-    if (
-      currentRun.length >= 3 &&
-      currentVariant[currentVariant.length - 1].num ===
-        currentRun[currentRun.length - 1].num + 1
-    ) {
-      currentRun.push(currentVariant[currentVariant.length - 1]);
-    }
-    if (currentRun.length >= 3) {
-      const runWoDuplicate = removeDuplicates(currentRun, "num");
-      runs.push(runWoDuplicate);
-      cloneDeck = cloneDeck.filter(
-        (item) =>
-          !runWoDuplicate.map((runItem: any) => runItem.id).includes(item.id)
-      );
-    }
-  });
-
-  return { cloneDeck, runs };
-};
-
-export const checkForSets = (cloneDeck: any[], min: number = 2) => {
-  const sets: any[] = [];
-  Array.from({ length: 13 }).forEach((_, index) => {
-    const sameNums = [...cloneDeck].filter((tile) => tile.num === index + 1);
-    if (sameNums.length > min) {
-      const numSet = new Set(sameNums.map((tile) => tile.colorVariant));
-      if (numSet.size > min) {
-        const uniqueColorVariants = Object.values(
-          sameNums.reduce((acc, tile) => {
-            if (
-              !acc.find((item: any) => item.colorVariant === tile.colorVariant)
-            )
-              acc.push(tile);
-            return acc;
-          }, [])
-        );
-        sets.push(uniqueColorVariants);
-        cloneDeck = cloneDeck.filter(
-          (tile) =>
-            !uniqueColorVariants.map((item: any) => item.id).includes(tile.id)
-        );
-      }
-    }
-  });
-
-  return { sets, cloneDeck };
-};
-
-export const groupConsecutiveColumns = (deck: any[]) => {
-  // Sort the deck by column number
-  const sortedDeck = [...deck].sort((a, b) => a.column - b.column);
-
-  const groups = [];
-  let currentGroup: any = [];
-
-  // Iterate over the sorted deck to find consecutive column numbers
-  sortedDeck.forEach((tile, index) => {
-    if (index === 0 || tile.column === sortedDeck[index - 1].column + 1) {
-      // Add the column number to the current group
-      currentGroup.push(tile);
-    } else {
-      // Start a new group
-      groups.push([...currentGroup]);
-      currentGroup = [tile];
-    }
-  });
-
-  // Add the last group
-  if (currentGroup.length > 0) {
-    groups.push([...currentGroup]);
+  if (tiles.length < 3) {
+    debugLog("GAME_UTILS", "Not enough tiles for run", {
+      tilesCount: tiles.length,
+    });
+    return false;
   }
+
+  const sortedTiles = tiles.sort((a, b) => a.num - b.num);
+  const color = sortedTiles[0].colorVariant;
+
+  // Check if all tiles are same color
+  const sameColor = sortedTiles.every((tile) => tile.colorVariant === color);
+  if (!sameColor) {
+    debugLog("GAME_UTILS", "Run check failed - different colors");
+    return false;
+  }
+
+  // Check if numbers are consecutive
+  const consecutive = sortedTiles.every(
+    (tile, index) => index === 0 || tile.num === sortedTiles[index - 1].num + 1
+  );
+
+  debugLog("GAME_UTILS", "Run check result", {
+    isRun: consecutive,
+    tilesCount: tiles.length,
+    color,
+  });
+
+  return consecutive;
+};
+
+/**
+ * Check if tiles form a valid set (same number, different colors)
+ */
+export const checkForSets = (tiles: Tile[]): boolean => {
+  debugLog("GAME_UTILS", "Checking for sets", { tilesCount: tiles.length });
+
+  if (tiles.length < 3) {
+    debugLog("GAME_UTILS", "Not enough tiles for set", {
+      tilesCount: tiles.length,
+    });
+    return false;
+  }
+
+  const number = tiles[0].num;
+  const colors = tiles.map((tile) => tile.colorVariant);
+  const uniqueColors = [...new Set(colors)];
+
+  // Check if all tiles have same number and different colors
+  const sameNumber = tiles.every((tile) => tile.num === number);
+  const differentColors = uniqueColors.length === tiles.length;
+
+  debugLog("GAME_UTILS", "Set check result", {
+    isSet: sameNumber && differentColors,
+    tilesCount: tiles.length,
+    number,
+    uniqueColors: uniqueColors.length,
+  });
+
+  return sameNumber && differentColors;
+};
+
+/**
+ * Group consecutive columns in a deck
+ */
+export const groupConsecutiveColumns = (deck: Tile[]): Tile[][] => {
+  debugLog("GAME_UTILS", "Grouping consecutive columns", {
+    deckLength: deck.length,
+  });
+
+  const sortedDeck = [...deck].sort(
+    (a, b) => (a.column || 0) - (b.column || 0)
+  );
+  const groups: Tile[][] = [];
+  let currentGroup: Tile[] = [];
+
+  for (let i = 0; i < sortedDeck.length; i++) {
+    const currentTile = sortedDeck[i];
+    const prevTile = sortedDeck[i - 1];
+
+    if (
+      i === 0 ||
+      !prevTile ||
+      (currentTile.column || 0) === (prevTile.column || 0) + 1
+    ) {
+      currentGroup.push(currentTile);
+    } else {
+      if (currentGroup.length > 0) {
+        groups.push(currentGroup);
+      }
+      currentGroup = [currentTile];
+    }
+  }
+
+  if (currentGroup.length > 0) {
+    groups.push(currentGroup);
+  }
+
+  debugLog("GAME_UTILS", "Consecutive columns grouped", {
+    groupsCount: groups.length,
+    groupSizes: groups.map((g) => g.length),
+  });
 
   return groups;
 };
 
-export const pickRandomTiles = (tileDeck: any, count: number) => {
-  const shuffledTiles = shuffle(tileDeck);
-  const pickedTiles = [];
-  const pickedTileIndexes = new Set();
+/**
+ * Pick random tiles from array
+ */
+export const pickRandomTiles = (tiles: Tile[], count: number): Tile[] => {
+  debugLog("GAME_UTILS", "Picking random tiles", {
+    availableTiles: tiles.length,
+    requestedCount: count,
+  });
 
-  while (pickedTiles.length < count && shuffledTiles.length > 0) {
-    const tileIndex = Math.floor(Math.random() * shuffledTiles.length);
-    if (!pickedTileIndexes.has(tileIndex)) {
-      pickedTiles.push(shuffledTiles[tileIndex]);
-      pickedTileIndexes.add(tileIndex);
-    }
-  }
+  const shuffled = shuffle(tiles);
+  const picked = shuffled.slice(0, count);
 
-  const remainingTiles = shuffledTiles.filter(
-    (_, index) => !pickedTileIndexes.has(index)
-  );
+  debugLog("GAME_UTILS", "Random tiles picked", {
+    pickedCount: picked.length,
+    pickedIds: picked.map((t) => t.id),
+  });
 
-  return { pickedTiles, remainingTiles };
+  return picked;
 };
