@@ -25,6 +25,7 @@ interface UseGameStateProps {
   playing: number;
   setPlaying: React.Dispatch<React.SetStateAction<number>>;
   setWinningStatus: React.Dispatch<React.SetStateAction<boolean>>;
+  onAiWin?: (winner: number) => void;
 }
 
 /**
@@ -42,6 +43,7 @@ export function useGameState({
   playing,
   setPlaying,
   setWinningStatus,
+  onAiWin,
 }: UseGameStateProps) {
   /**
    * Completes the current turn and moves to the next player
@@ -106,7 +108,7 @@ export function useGameState({
           [`p${playing}`]: deckWithThrownTile,
         }));
         if (isWinningDeck(deckWithThrownTile, okey)) {
-          // winner
+          if (onAiWin && playing !== 1) onAiWin(playing);
         } else {
           botDiscard(
             deckWithThrownTile.find(
@@ -134,7 +136,7 @@ export function useGameState({
           [`p${playing}`]: updatedDeck,
         }));
         if (isWinningDeck(updatedDeck, okey)) {
-          // winner
+          if (onAiWin && playing !== 1) onAiWin(playing);
         } else {
           botDiscard(
             updatedDeck.find(

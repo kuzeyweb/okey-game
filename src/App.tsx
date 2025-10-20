@@ -41,7 +41,6 @@ function App() {
   const completeTurn = () => {
     setPlaying((cr) => {
       const nextPlayer = cr === 4 ? 1 : cr + 1;
-      console.info(`${nextPlayer}. Oyuncu oynuyor.`);
       debugLog("STATE_CHANGES", `Turn completed, next player: ${nextPlayer}`);
       return nextPlayer;
     });
@@ -71,6 +70,20 @@ function App() {
     playing,
     setPlaying,
     setWinningStatus,
+    onAiWin: (winner: number) => {
+      window.alert(`Oyunu kazanan: Oyuncu ${winner}`);
+      // Restart immediately for AI wins
+      setDiscardedTiles({ p1top2: [], p2top3: [], p3top4: [], p4top1: [] });
+      const {
+        tileDeck: deck,
+        okey: ok,
+        playerDecks,
+      } = distributeTilesWithOkey();
+      setTileDeck(deck);
+      setOkey(ok);
+      setPlayerDecks(playerDecks);
+      setPlaying(1);
+    },
   });
 
   /**
