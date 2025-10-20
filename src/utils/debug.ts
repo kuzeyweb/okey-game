@@ -1,7 +1,7 @@
 // Debug configuration for the Okey game
 export const DEBUG_CONFIG = {
   // Set to true to enable debug logging
-  enabled: false,
+  enabled: true,
 
   // Debug levels
   levels: {
