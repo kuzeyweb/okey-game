@@ -1,17 +1,6 @@
 import React from "react";
-import { debugLog } from "../config/debug";
+import { debugLog } from "../utils/debug";
 
-/**
- * BoardMiddle Component
- *
- * Renders the middle section of the Okey game board containing:
- * - Left side: Player 4 area
- * - Center: Okey tile (shows the current okey number) and ground tiles count
- * - Right side: Player 2 area
- *
- * The okey tile displays the number that acts as a wildcard/joker.
- * The ground tiles show how many tiles are left in the deck.
- */
 interface BoardMiddleProps {
   playing: number;
   playerDecks: { p1: any[]; p2: any[]; p3: any[]; p4: any[] };
@@ -22,6 +11,10 @@ interface BoardMiddleProps {
   allowDrop: (e: React.DragEvent) => void;
 }
 
+/**
+ * BoardMiddle component - Middle section of the game board
+ * Contains the okey tile, ground tiles, and side players
+ */
 export default function BoardMiddle({
   playing,
   playerDecks,
@@ -31,18 +24,6 @@ export default function BoardMiddle({
   onFinish,
   allowDrop,
 }: BoardMiddleProps) {
-  debugLog("BOARD_MIDDLE", "Component rendered", {
-    playing,
-    okeyTile: okey,
-    groundTilesCount: tileDeck.length,
-    playerDecksLength: {
-      p1: playerDecks.p1.length,
-      p2: playerDecks.p2.length,
-      p3: playerDecks.p3.length,
-      p4: playerDecks.p4.length,
-    },
-  });
-
   return (
     <div className="mid-section">
       {/* Left side - Player 4 */}
@@ -55,7 +36,7 @@ export default function BoardMiddle({
 
       {/* Center - Okey tile and ground tiles */}
       <div className="board-middle">
-        {/* Okey tile - shows the wildcard number */}
+        {/* Okey tile display */}
         <div
           className={`tile color${okey?.colorVariant}`}
           style={{ width: "54px", height: "82px" }}
@@ -68,7 +49,7 @@ export default function BoardMiddle({
           <div className="circle"></div>
         </div>
 
-        {/* Ground tiles count - draggable when player has 14 tiles */}
+        {/* Ground tiles counter */}
         <div className={`tile`} style={{ width: "54px", height: "82px" }}>
           <div
             className="num"

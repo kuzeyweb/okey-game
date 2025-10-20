@@ -1,20 +1,8 @@
 import React from "react";
 import ThrowedTileDeck from "./ThrowedTileDeck";
 import TileGrid from "./TileGrid";
-import { debugLog } from "../config/debug";
+import { debugLog } from "../utils/debug";
 
-/**
- * BoardBottom Component
- *
- * Renders the bottom section of the Okey game board containing:
- * - Player 1 (human player) controls and interface
- * - Discarded tiles from Player 4
- * - Player's own discarded tiles
- * - Sort deck button and player selection
- * - 26-slot tile grid for player's tiles
- *
- * This is the main interactive area for the human player.
- */
 interface BoardBottomProps {
   playing: number;
   playerDecks: { p1: any[]; p2: any[]; p3: any[]; p4: any[] };
@@ -33,6 +21,10 @@ interface BoardBottomProps {
   discardTile: (e: React.DragEvent) => void;
 }
 
+/**
+ * BoardBottom component - Bottom section of the game board
+ * Contains player 1 area, controls, discard zone, and the main tile grid
+ */
 export default function BoardBottom({
   playing,
   playerDecks,
@@ -45,41 +37,24 @@ export default function BoardBottom({
   allowDrop,
   discardTile,
 }: BoardBottomProps) {
-  debugLog("BOARD_BOTTOM", "Component rendered", {
-    playing,
-    selectedPlayer,
-    playerDecksLength: {
-      p1: playerDecks.p1.length,
-      p2: playerDecks.p2.length,
-      p3: playerDecks.p3.length,
-      p4: playerDecks.p4.length,
-    },
-    discardedTilesCount: {
-      p1top2: discardedTiles.p1top2.length,
-      p4top1: discardedTiles.p4top1.length,
-    },
-  });
+  debugLog("FUNCTION_CALLS", "BoardBottom render");
 
   /**
-   * Handle player selection change
+   * Handles player selection change
    */
   const handlePlayerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newPlayer = Number(e.target.value);
-    debugLog("BOARD_BOTTOM", "Player selection changed", {
-      from: selectedPlayer,
-      to: newPlayer,
-    });
+    debugLog("STATE_CHANGES", `Selected player changed to: ${newPlayer}`);
     setSelectedPlayer(newPlayer);
   };
 
   /**
-   * Handle auto sort button click
+   * Handles auto sort button click
    */
   const handleAutoSort = () => {
-    debugLog("BOARD_BOTTOM", "Auto sort triggered", { selectedPlayer });
+    debugLog("FUNCTION_CALLS", "Auto sort button clicked");
     onAutoSort();
   };
-
   return (
     <div className="board-bottom">
       <div
@@ -92,7 +67,7 @@ export default function BoardBottom({
           justifyContent: "space-around",
         }}
       >
-        {/* Discarded tiles from Player 4 - draggable when player has 14 tiles */}
+        {/* Player 4's discarded tiles (draggable by player 1) */}
         <div className="dropzone">
           <ThrowedTileDeck
             tile={discardedTiles?.p4top1?.[discardedTiles?.p4top1?.length - 1]}
@@ -100,8 +75,7 @@ export default function BoardBottom({
             onDragStart={onDrag}
           />
         </div>
-
-        {/* Player 1 controls and interface */}
+        {/* Player 1 controls area */}
         <div
           style={{
             display: "flex",
@@ -126,8 +100,7 @@ export default function BoardBottom({
             </select>
           </div>
         </div>
-
-        {/* Player's own discarded tiles - drop zone for discarding */}
+        {/* Discard zone for player 1 */}
         <div
           className="dropzone"
           style={{ marginBottom: "-200px" }}
@@ -157,8 +130,7 @@ export default function BoardBottom({
           )}
         </div>
       </div>
-
-      {/* 26-slot tile grid for player's tiles */}
+      {/* Main tile grid for selected player */}
       <div className="board-container">
         <TileGrid
           tiles={playerDecks?.[`p${selectedPlayer as 1 | 2 | 3 | 4}`] ?? []}
