@@ -4,6 +4,8 @@ A browser-based Okey game built using **React**, **TypeScript**, and **Vite**.
 
 This project features modular components, custom hooks for game logic and drag-and-drop interactions, and a clear separation between UI and core logic.
 
+🎮 Live Demo: okey-game-one.vercel.app
+
 ---
 
 ## Getting Started
