@@ -5,7 +5,6 @@ import {
   improvesPointWith,
   isWinningDeck,
 } from "../utils/gameLogic";
-import { debugLog } from "../utils/debug";
 
 type PlayerDecks = { p1: any[]; p2: any[]; p3: any[]; p4: any[] };
 type DiscardedTiles = {
