@@ -1,59 +1,60 @@
 # Okey Game
 
-A browser-based Okey game implemented with React + TypeScript and Vite. The project features modular components, custom hooks for game logic and drag-and-drop, and clear separation of UI and logic.
+A browser-based Okey game built using **React**, **TypeScript**, and **Vite**.
+
+This project features modular components, custom hooks for game logic and drag-and-drop interactions, and a clear separation between UI and core logic.
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js v18 or higher
 - pnpm, npm, or yarn
 
-### Install
+### Installation
 
-`ash
+Install dependencies using one of the following commands:
+
+```bash
 pnpm install
-
 # or
-
 npm install
-
 # or
-
 yarn
-`
+```
 
-### Run
+### Development
 
-`ash
+Run the development server:
+
+```bash
 pnpm dev
-
 # or
-
 npm run dev
-
 # or
-
 yarn dev
-`
+```
 
 ### Build
 
-`ash
+Create a production build:
+
+```bash
 pnpm build
-
 # or
-
 npm run build
-
 # or
-
 yarn build
-`
+```
+
+---
 
 ## Project Structure
 
-`src/
+```
+src/
   App.tsx
   components/
     board/
@@ -75,22 +76,27 @@ yarn build
     debug.ts
   assets/
     istaka.png
-    react.svg`
+    react.svg
+```
+
+Components are grouped logically under **components/board**, **components/tiles**, and **components/media** for better clarity.
+
+---
 
 ## Key Concepts
 
-- Components are organized under components/board, components/tiles, and components/media for clarity.
-- Core game logic is contained in utils/gameLogic.ts and pure utilities in utils/gameUtils.ts.
-- useGameState manages turn flow, auto-sort, and win checks.
-- useDragDrop encapsulates drag/drop interactions.
+- **UI / Logic Separation:** Core gameplay logic is handled inside `utils/gameLogic.ts`, while pure helper functions are kept in `utils/gameUtils.ts`.
+- **State Management:** `useGameState` manages turn flow, sorting, and win conditions.
+- **Drag and Drop:** `useDragDrop` handles all tile drag-and-drop interactions.
+- **Debugging:** `utils/debug.ts` allows toggling of log outputs for easier troubleshooting.
+
+---
 
 ## Debugging
 
-A simple debug utility is provided in src/utils/debug.ts.
+Enable or disable debug logging via `src/utils/debug.ts`:
 
-- Toggle all debug logs:
-  `	s
-// src/utils/debug.ts
+```ts
 export const DEBUG_CONFIG = {
   enabled: false,
   levels: {
@@ -99,12 +105,14 @@ export const DEBUG_CONFIG = {
     DRAG_DROP: true,
   },
 };
-`
-- When enabled is true, functions will emit console.info logs according to their level.
-- Render and initialization paths intentionally do not emit logs to avoid noisy output.
+```
 
-## Scripts
+When `enabled` is set to `true`, relevant events and state changes will be logged to the console using `console.info`. Render-related logs are intentionally omitted to avoid noise.
 
-- dev: start development server
-- build: production build
-- preview: preview built app (if configured by Vite)
+---
+
+## Available Scripts
+
+- **dev:** Starts the development server
+- **build:** Builds the project for production
+- **preview:** Serves the production build locally (if configured in Vite)
